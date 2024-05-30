@@ -52,6 +52,9 @@ class DailyAvg:
     # Task 3b
     def get_correlation(self):
         return self.dataset['Spread'].corr(self.dataset['Depth'])
+    
+    def regression():
+        return None
           
         
 
