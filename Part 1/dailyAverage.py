@@ -48,6 +48,10 @@ class DailyAvg:
 
         plt.tight_layout()
         plt.show()
+    
+    # Task 3b
+    def get_correlation(self):
+        return self.dataset['Spread'].corr(self.dataset['Depth'])
           
         
 
@@ -62,6 +66,7 @@ ds=calc.get_dataset()
 o=DailyAvg(ds)
 o.set_data()
 o.daily_avg()
-o.plot_daily_series()
+# o.plot_daily_series()
+print(f'Correlation {o.get_correlation()}')
 
         
