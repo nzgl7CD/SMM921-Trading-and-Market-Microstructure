@@ -1,62 +1,81 @@
-from getdata import PartOne as PO
-from calculations import Calculations as Clc
 import pandas as pd
 import matplotlib.pyplot as plt
-import statsmodels.stats.outliers_influence as oi
+from calculations import Calculations as Clc
 import numpy as np
+import scipy.stats as sps
+import statsmodels.api as sm
 import statsmodels.formula.api as smf
 import statsmodels.stats.api as sms
+import statsmodels.tsa.api as smt
+import statsmodels.stats.diagnostic as smdiag
+import statsmodels.stats.outliers_influence as oi
+import statsmodels.stats.stattools as stats
+import statsmodels.tsa.ar_model as sar
 
-class DailyAvg:
-    def __init__(self, dataset) -> None:
-        
-        self.dataset=dataset
-        self.unique_stocks = None
-    
-    def set_data(self):
+class DataProcessor:
+    def __init__(self, dataset):
+        self.dataset = dataset
+        self.prepare_data()
+
+    def prepare_data(self):
         self.unique_stocks = self.dataset['Stock'].unique().tolist()
-        self.dataset = self.dataset[(self.dataset['Stock'] == self.unique_stocks[0]) & (self.dataset['Time'] == '16:25:00')]
-        
-    def daily_avg(self):
-        average_values = self.dataset.groupby('Stock')[['Spread', 'Depth']].mean()
+        self.dataset = self.dataset[self.dataset['Stock'] == self.unique_stocks[0]]
 
-        average_values_df = average_values.reset_index()
+        # Ensure 'Date' is in datetime format and 'Time' is in string format
+        self.dataset['Date'] = pd.to_datetime(self.dataset['Date']).dt.date
+        self.dataset['Time'] = pd.to_datetime(self.dataset['Time'], format='%H:%M:%S').dt.time
 
-        midquote_volatility = np.std(self.dataset['Mid Quote Return'])
-        print(average_values_df, '\n\n', midquote_volatility)
-    
+        # Calculate daily averages
+        self.dataset['AbsMidQuoteReturn'] = self.dataset['MidQuoteReturn'].abs()
+        self.dataset['DailyAvgMidQuoteVolatility'] = self.dataset.groupby(self.dataset['Date'])['AbsMidQuoteReturn'].transform('mean')
+        self.dataset['DailyAvgSpread'] = self.dataset.groupby(self.dataset['Date'])['Spread'].transform('mean')
+        self.dataset['DailyAvgDepth'] = self.dataset.groupby(self.dataset['Date'])['Depth'].transform('mean')
+
+        print(self.dataset)
+
+    # Plotting task 3a
+
     def plot_daily_series(self):
-        self.dataset['Date-Time'] = pd.to_datetime(self.dataset['Date-Time'])
+        # Filter the dataset for the time '16:25:00'
+        specific_time = pd.to_datetime('16:25:00').time()
+        filtered_dataset = self.dataset[self.dataset['Time'] == specific_time]
 
-        fig, ax1 = plt.subplots(figsize=(10, 6))
+        # Check if there is data available
+        if filtered_dataset.empty:
+            print("No data available for the specified time '16:25:00'.")
+            return
 
-        # Plot Spread on the primary y-axis
-        ax1.plot(self.dataset['Date-Time'], self.dataset['Spread'], label='Spread', color='blue')
-        ax1.set_xlabel('Date-Time')
-        ax1.set_ylabel('Spread', color='blue')
-        ax1.tick_params(axis='y', labelcolor='blue')
-        ax1.set_title('Time-Series of Spread and Depth')
-
-        # Create a secondary y-axis to plot Depth
-        ax2 = ax1.twinx()
-        ax2.plot(self.dataset['Date-Time'], self.dataset['Depth'], label='Depth', color='orange')
-        ax2.set_ylabel('Depth', color='orange')
-        ax2.tick_params(axis='y', labelcolor='orange')
-
-        # Add legends
-        fig.legend(loc='upper left', bbox_to_anchor=(0.1, 0.9))
-
-        plt.tight_layout()
-        plt.show()
-    
-    # Task 3b
-    def get_correlation(self):
-        return self.dataset['Spread'].corr(self.dataset['Depth'])
-    
-    def regression():
-        return None
-          
+        # Plot the data
         
+        plt.figure(figsize=(10, 6))
+        # Do one at the time
+        plt.plot(filtered_dataset['Date'], filtered_dataset['DailyAvgMidQuoteVolatility'], label='Daily Avg Mid Quote Volatility', marker='o')
+        plt.plot(filtered_dataset['Date'], filtered_dataset['DailyAvgSpread'], label='Daily Avg Spread', marker='o')
+        plt.plot(filtered_dataset['Date'], filtered_dataset['DailyAvgDepth'], label='Daily Avg Depth', marker='o')
+
+        plt.xlabel('Date')
+        plt.ylabel('Values')
+        plt.title('Daily Averages at 16:25:00')
+        plt.legend()
+        plt.grid(True)
+        plt.xticks(rotation=45)
+        plt.tight_layout()
+
+        plt.show()
+
+    # Correlation avg depth and spread task 3b
+
+    def get_correlation(self):
+        return self.dataset['DailyAvgSpread'].corr(self.dataset['DailyAvgDepth'])
+
+    def regression(self):
+        formula = 'MidQuoteReturn ~ DailyAvgSpread'
+        regressionSpread = smf.ols(formula, self.dataset).fit()
+        model = 'MidQuoteReturn ~ DailyAvgDepth'
+        regressionDepth=smf.ols(model, self.dataset).fit()
+        return regressionSpread.summary(), '\n\n', regressionDepth.summary()
+
+# Sample code
 
 
 output_path = r'Part 1\modified_trading_data_2024.csv'
@@ -66,10 +85,7 @@ calc.set_quote_spread()
 calc.save_data()
 ds=calc.get_dataset()
 
-o=DailyAvg(ds)
-o.set_data()
-o.daily_avg()
-# o.plot_daily_series()
-print(f'Correlation {o.get_correlation()}')
 
-        
+o=DataProcessor(ds)
+print(o.regression())
+# o.plot_daily_series()

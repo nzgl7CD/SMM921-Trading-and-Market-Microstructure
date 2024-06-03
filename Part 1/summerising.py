@@ -68,16 +68,16 @@ class Summeriser:
         
 
 
-output_path = r'Part 1\modified_trading_data_2024.csv'
-calc=Clc(output_path)
-calc.set_datset()
-calc.set_quote_spread()
-calc.save_data()
-ds=calc.get_dataset()
+# output_path = r'Part 1\modified_trading_data_2024.csv'
+# calc=Clc(output_path)
+# calc.set_datset()
+# calc.set_quote_spread()
+# calc.save_data()
+# ds=calc.get_dataset()
 
-o=Summeriser(ds)
-sumer=o.summing()
-means=o.mean_measures()
-print(sumer, '\n', means)
+# o=Summeriser(ds)
+# sumer=o.summing()
+# means=o.mean_measures()
+# print(sumer, '\n', means)
 
 

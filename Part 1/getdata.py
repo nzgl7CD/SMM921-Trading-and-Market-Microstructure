@@ -1,4 +1,6 @@
 import pandas as pd
+import numpy as np
+from matplotlib import pyplot as plt
 
 class PartOne:
     
@@ -59,13 +61,13 @@ class PartOne:
             print("No data to display. Please load and clean the data first.")
 
 # Usage example
-file_path = r'Part 1\SMM921_trading_data_2024.csv'
-output_path = r'Part 1\modified_trading_data_2024.csv'
+# file_path = r'Part 1\SMM921_trading_data_2024.csv'
+# output_path = r'Part 1\modified_trading_data_2024.csv'
 
-part_one = PartOne(file_path)
-part_one.get_data()
-part_one.clean_up_data()
-part_one.pick_three_stocks()
-part_one.save_data(output_path)
+# part_one = PartOne(file_path)
+# part_one.get_data()
+# part_one.clean_up_data()
+# part_one.pick_three_stocks()
+# part_one.save_data(output_path)
 # part_one.display_data()
 
