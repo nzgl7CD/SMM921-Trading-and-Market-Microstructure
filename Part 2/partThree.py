@@ -131,15 +131,18 @@ class Momentum:
         world_coefficient = regression.params['World']
         print(world_coefficient)
 
+    def get_returns(self):
+        return self.returns
+
 
         
 
     
 
-momentum = Momentum()
-momentum.momentum_signal()
+# momentum = Momentum()
+# momentum.momentum_signal()
 
-momentum.portfolio_generate()
-momentum.set_annulised_mean_returns()
-momentum.portfolio_w_HML()
-momentum.regression()
+# momentum.portfolio_generate()
+# momentum.set_annulised_mean_returns()
+# momentum.portfolio_w_HML()
+# momentum.regression()

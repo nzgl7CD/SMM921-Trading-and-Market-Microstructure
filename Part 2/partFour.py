@@ -1,5 +1,4 @@
 from partThree import Momentum
-from partTwo import PortfolioAnalysis
 from partOne import PartOne
 import pandas as pd
 import numpy as np
@@ -9,26 +8,29 @@ from matplotlib import pyplot as plt
 
 class PartFour:
     
-    def __init__(self, filepath) -> None:
-        momentumClass=Momentum(filepath)
-        self.momentum_signals=momentumClass.momentum_signal()
+    def __init__(self) -> None:
+        momObj=Momentum()
+        self.mom_sign=momObj.momentum_signal()
+        self.returns=momObj.get_returns()
         self.alphas = None
-        o1=PartOne
-        self.returns=o1.get_returns()
-        self.cross_stock_average_volatility = self.calculate_cross_stock_average_volatility()
-        self.covariance_matrix = self.calculate_covariance_matrix()
+        self.recent_returns=None
+        # self.cross_stock_average_volatility = self.calculate_cross_stock_average_volatility()
+        # self.covariance_matrix = self.calculate_covariance_matrix()
     
     def calculate_cross_stock_average_volatility(self):
-        recent_returns = self.returns.iloc[-60:]  # Most recent 60 data points
+        recent_returns = self.returns.iloc[-60:, 1:]  # Most recent 60 data points
         volatilities = recent_returns.std()  # Standard deviation of each return series
         cross_stock_average_volatility = volatilities.mean()  # Cross-stock average volatility
         return cross_stock_average_volatility
 
     def calculate_covariance_matrix(self):
-        recent_returns = self.returns.iloc[-60:]  # Most recent 60 data points
+        recent_returns = self.returns.iloc[-60:, 1:]  # Most recent 60 data points
         covariance_matrix = recent_returns.cov()  # Covariance matrix of returns
         return covariance_matrix
 
+
+
+    # Next step
     def mean_variance_optimal_weights(self, mean_returns, cov_matrix, risk_aversion):
         inv_cov_matrix = np.linalg.inv(cov_matrix)
         ones = np.ones(len(mean_returns))
@@ -98,22 +100,6 @@ class PartFour:
 
 
 
-output_path = r'Part 2\modified_SMM921_pf_data_2024.xlsx'
-o=PartFour(output_path)
+o=PartFour()
 o.calculate_cross_stock_average_volatility()
-o.calculate_covariance_matrix()
-
-risk_aversion_coefficient = 4
-portfolio_returns, portfolio_weights = o.calculate_portfolio_returns_and_weights(risk_aversion_coefficient)
-
-# Calculate the metrics for the portfolio
-mean_return_annualized, return_volatility_annualized, sharpe_ratio = o.calculate_metrics(portfolio_returns)
-print(mean_return_annualized, return_volatility_annualized, sharpe_ratio)
-
-# Calculate average monthly turnover
-average_turnover = o.calculate_average_turnover(portfolio_weights)
-print(average_turnover)
-
-# Plot the cumulative returns
-o.plot_cumulative_returns(portfolio_returns)
-
+print(o.calculate_covariance_matrix())
