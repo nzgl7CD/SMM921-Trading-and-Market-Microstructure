@@ -41,36 +41,13 @@ class PartFour:
         return covariance_matrix
 
     # Next step
-    def mean_variance_optimal_weights(self, alpha, sigma, crra):
-        # inv_cov_matrix = np.linalg.inv(cov_matrix)
-        myOnes = np.ones(len(alpha.index))
-        inv_sigma = np.linalg.inv(sigma)
-        # weights = inv_cov_matrix.dot(mean_returns - risk_aversion * cov_matrix.dot(ones)) / (ones.dot(inv_cov_matrix).dot(mean_returns - risk_aversion * cov_matrix.dot(ones)))
-        # return weights
-        gamma = (alpha.T @ inv_sigma @ myOnes - crra)/(myOnes.T @ inv_sigma @ myOnes)
-        w = inv_sigma @ (alpha - myOnes*gamma) / crra
-        print(sum(w))
-        return w
+    def mean_variance_optimal_weights(self, mean_returns, cov_matrix, risk_aversion):
+        inv_cov_matrix = np.linalg.inv(cov_matrix)
+        ones = np.ones(len(mean_returns))
+        weights = inv_cov_matrix.dot(mean_returns - risk_aversion * cov_matrix.dot(ones)) / (ones.dot(inv_cov_matrix).dot(mean_returns - risk_aversion * cov_matrix.dot(ones)))
+        return weights
 
     def calculate_portfolio_returns_and_weights(self,crra=4):
-        
-        # portfolio_returns = []
-        # portfolio_weights = []
-        # gamma=None
-        # w=None
-        # for i in range(61,len(self.returns.drop(columns=['Date']))): 
-        #     alpha = self.returns.drop(columns=['Date']).loc[i:].dropna().mean()
-        #     sigma = self.returns.drop(columns=['Date']).loc[i:].dropna().cov()
-        #     inv_sigma = np.linalg.inv(sigma)
-        #     myOnes = np.ones(35)
-
-        #     gamma = (alpha.T @ inv_sigma @ myOnes - crra)/(myOnes.T @ inv_sigma @ myOnes)
-        #     w = inv_sigma @ (alpha - myOnes*gamma) / crra
-        # print("Sum of absolute weights is " + str(sum(abs(w))))
-        # return f'Weights: \n{w}'
-
-        
-        # rolling_windows = returns_without_date.rolling(window=60)
         portfolio_returns = []
         portfolio_weights = []
         returns_without_date=self.returns.drop(columns=['Date', 'World']).dropna()
@@ -86,17 +63,17 @@ class PartFour:
             if next_month < returns_without_date.index.size:
                 temp=window_returns.loc[i+1]
                 next_month_return = temp.dot(weights)
+                # if next_month_return<0:
+                    
                 portfolio_returns.append(next_month_return)
                 portfolio_weights.append(weights)
-
         self.portfolio_returns = pd.Series(portfolio_returns)
         self.portfolio_weights = pd.DataFrame(portfolio_weights)
         # returns_str = portfolio_returns.to_string(header=True, index=True, float_format='{:,.4f}'.format)
-        print(f'Returns: \n\n{self.cumulative_returns}\n\nWeights: \n{self.portfolio_weights}')
+        print(f'Returns: \n\n{self.portfolio_returns}\n\nWeights: \n{self.portfolio_weights}')
         return f'Returns: \n\n{self.portfolio_returns}\n\nWeights: \n{self.portfolio_weights}'
     
-
-    def calculate_metrics(self):
+    def annualisation(self):
         # Annualization factor
         annual_factor = 12
 
@@ -112,16 +89,16 @@ class PartFour:
 
         return mean_return_annualized, return_volatility_annualized, sharpe_ratio
 
-    def calculate_average_turnover(self, portfolio_weights):
-        # Calculate the absolute change in weights from one month to the next
-        weight_changes = portfolio_weights.diff().abs().sum(axis=1)
-        # Calculate average turnover
-        average_turnover = weight_changes.mean()
-        return average_turnover
+    # def calculate_average_turnover(self, portfolio_weights):
+    #     # Calculate the absolute change in weights from one month to the next
+    #     weight_changes = portfolio_weights.diff().abs().sum(axis=1)
+    #     # Calculate average turnover
+    #     average_turnover = weight_changes.mean()
+    #     return average_turnover
 
     def plot_cumulative_returns(self):
         
-
+        self.cumulative_returns=(1 + self.portfolio_returns).cumprod()
         plt.figure(figsize=(12, 8))
         self.cumulative_returns.plot(label='Cumulative Returns', marker='o')
         plt.xlabel('Date')
@@ -131,18 +108,10 @@ class PartFour:
         plt.grid(True)
         plt.tight_layout()
         plt.show()
-    
-        
-
-
-
-
-
-
 
 o=PartFour()
 o.calculate_alphas()
 o.calculate_covariance_matrix()
 o.calculate_portfolio_returns_and_weights()
-# o.calculate_metrics()
+# o.annualisation()
 # o.plot_cumulative_returns()
