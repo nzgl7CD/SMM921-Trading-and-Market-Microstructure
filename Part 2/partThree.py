@@ -16,17 +16,21 @@ class Momentum:
         self.cumulative_returns = None
         self.portfolio_metrics = None
         self.quintiles=None
+      
 
     def momentum_signal(self):
         momentum_signals = pd.DataFrame(index=self.returns.index, columns=self.returns.columns[1:-1])  # Exclude 'World, Date'
         momentum_signals['Date'] = self.returns['Date']  # Add Date column first
         for country in momentum_signals.columns[:-1]:  # Exclude 'Date'
             momentum_signals[country] = self.returns[country].rolling(window=12).apply(
-                lambda x: (1 + x[:-1]).prod() if len(x) == 12 else np.nan, raw=True)
+                lambda x: x[:-1].sum() if len(x) == 12 else np.nan, raw=True)
+
+        
         return momentum_signals
     
     def assign_to_portfolios(self, momentum):
         # Ranking increasingly in five equal sized groups
+        # print(momentum)
         ranks = momentum.rank()
         self.quintiles = pd.qcut(ranks, 5, labels=False)
         return self.quintiles
@@ -38,14 +42,16 @@ class Momentum:
 
         momentum_signals = self.momentum_signal()
         
-        for date in momentum_signals.index[12:]:
+        for date in momentum_signals.index[11:]:
             current_momentum = momentum_signals.loc[date].iloc[:-1]
             portfolios = self.assign_to_portfolios(current_momentum)
             next_month = date+1
             if next_month in self.returns.index:
-                for q in range(5):
+                for q in range(0,5):
+                    # print(portfolios[portfolios == q])
                     portfolio_countries = portfolios[portfolios == q].index
                     self.portfolio_returns.loc[next_month, f'P{q + 1}'] = self.returns.loc[next_month, portfolio_countries].mean()
+                    # print(self.returns.loc[next_month, portfolio_countries].mean())
         
 
         self.portfolio_returns = self.portfolio_returns.dropna()
@@ -144,5 +150,8 @@ class Momentum:
 
 # momentum.portfolio_generate()
 # momentum.set_annulised_mean_returns()
-# momentum.portfolio_w_HML()
+# momentum.plot_cumulative_returns()
+
+# print(momentum.portfolio_w_HML())
+# momentum.plot_portfolio_w_HML()
 # momentum.regression()

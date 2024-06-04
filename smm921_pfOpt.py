@@ -8,7 +8,7 @@ import pandas as pd
 
 data = pd.read_csv('./sampleData.csv')
 returns = data.pct_change()
-
+print(returns)
 crra = 5
 
 alpha = returns.dropna().mean()
@@ -23,6 +23,6 @@ plt.plot(w)
 plt.title("Simple weights")
 plt.show()
 plt.close()
-
+print(w)
 print("Sum of weights is " + str(sum(w)))
 print("Sum of absolute weights is " + str(sum(abs(w))))

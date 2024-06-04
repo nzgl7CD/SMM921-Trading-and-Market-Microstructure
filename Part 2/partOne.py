@@ -40,7 +40,7 @@ class PartOne:
 
         # Set 'Country' as the index
         self.metrics.set_index('Country', inplace=True)
-
+        
         print()
         display(self.metrics)
         print()
@@ -50,6 +50,7 @@ class PartOne:
 
         # Optional: Save the metrics to a CSV file
         self.metrics.to_csv('Part 2/country_metrics.csv', index=True)
+        returns.to_excel('Part 2\modified_SMM921_pf_data_2024.xlsx')
         return returns
     
     def outliers(self):
