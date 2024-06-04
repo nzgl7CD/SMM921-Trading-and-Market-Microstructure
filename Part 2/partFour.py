@@ -16,6 +16,20 @@ class PartFour:
         self.recent_returns=None
         self.portfolio_returns=None
         self.portfolio_weights=None
+    
+    def get_returns(self):
+        file_path = r'Part 2\SMM921_pf_data_2024.xlsx'
+        dataset = pd.read_excel(file_path)
+        dataset['Date'] = pd.to_datetime(dataset['Date'])
+        tempDates = pd.to_datetime(dataset['Date'])
+        returns = dataset.drop(columns=['Date']).pct_change().dropna()
+        # Calculate the 'world stock market return' as the average return across the countries
+        returns['World'] = returns.mean(axis=1)
+        
+        # Combine the returns data with the date column
+        returns.insert(0, 'Date', tempDates)
+        print(returns)
+        return returns
 
     # Alpha=IC*sigma_r*(s_i-s^-)/sigma_s
     def calculate_alphas(self, ic=0.02):
@@ -45,23 +59,24 @@ class PartFour:
         inv_cov_matrix = np.linalg.inv(cov_matrix)
         ones = np.ones(len(mean_returns))
         weights = inv_cov_matrix.dot(mean_returns - risk_aversion * cov_matrix.dot(ones)) / (ones.dot(inv_cov_matrix).dot(mean_returns - risk_aversion * cov_matrix.dot(ones)))
+        
         return weights
 
     def calculate_portfolio_returns_and_weights(self,crra=4):
         portfolio_returns = []
         portfolio_weights = []
-        returns_without_date=self.returns.drop(columns=['Date', 'World']).dropna()
-
-        for i in range(61, len(returns_without_date)):
-            window_returns = returns_without_date.loc[i:]
+        
+        returns_without_date=self.get_returns().drop(columns=['Date', 'World']).dropna()
+        for i in range(61, len(returns_without_date.index)):
             
+            window_returns = returns_without_date.loc[i:]
             mean_returns = window_returns.mean()
             cov_matrix = window_returns.cov()
             # First month return 0.06021854209088286
             weights = self.mean_variance_optimal_weights(mean_returns, cov_matrix, crra)
             next_month=i+1
             if next_month < returns_without_date.index.size:
-                temp=window_returns.loc[i+1]
+                temp=window_returns.loc[next_month]
                 next_month_return = temp.dot(weights)
                 # if next_month_return<0:
                     
@@ -70,7 +85,7 @@ class PartFour:
         self.portfolio_returns = pd.Series(portfolio_returns)
         self.portfolio_weights = pd.DataFrame(portfolio_weights)
         # returns_str = portfolio_returns.to_string(header=True, index=True, float_format='{:,.4f}'.format)
-        print(f'Returns: \n\n{self.portfolio_returns}\n\nWeights: \n{self.portfolio_weights}')
+        print(f'Returns: \n\n{self.portfolio_returns[120:]}\n\nWeights: \n{self.portfolio_weights[120:]}')
         return f'Returns: \n\n{self.portfolio_returns}\n\nWeights: \n{self.portfolio_weights}'
     
     def annualisation(self):
@@ -113,5 +128,5 @@ o=PartFour()
 o.calculate_alphas()
 o.calculate_covariance_matrix()
 o.calculate_portfolio_returns_and_weights()
-# o.annualisation()
-# o.plot_cumulative_returns()
+o.annualisation()
+o.plot_cumulative_returns()
