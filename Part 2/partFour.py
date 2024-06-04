@@ -21,14 +21,9 @@ class PartFour:
         file_path = r'Part 2\SMM921_pf_data_2024.xlsx'
         dataset = pd.read_excel(file_path)
         dataset['Date'] = pd.to_datetime(dataset['Date'])
-        tempDates = pd.to_datetime(dataset['Date'])
         returns = dataset.drop(columns=['Date']).pct_change().dropna()
-        # Calculate the 'world stock market return' as the average return across the countries
         returns['World'] = returns.mean(axis=1)
-        
-        # Combine the returns data with the date column
-        returns.insert(0, 'Date', tempDates)
-        print(returns)
+        returns.insert(0, 'Date', dataset['Date'][1:])  # Adjusting for the dropna()
         return returns
 
     # Alpha=IC*sigma_r*(s_i-s^-)/sigma_s
@@ -50,7 +45,7 @@ class PartFour:
         return cross_stock_average_volatility
 
     def calculate_covariance_matrix(self):
-        recent_returns = self.returns.iloc[-60:, 1:]  # Most recent 60 data points
+        recent_returns = self.get_returns().drop(columns=['Date', 'World'])[-60:]  # Most recent 60 data points
         covariance_matrix = recent_returns.cov()  # Covariance matrix of returns
         return covariance_matrix
 
