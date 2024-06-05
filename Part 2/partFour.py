@@ -3,6 +3,7 @@ from partOne import PartOne
 import pandas as pd
 import numpy as np
 from matplotlib import pyplot as plt
+from scipy.optimize import minimize
 
 
 
@@ -44,44 +45,46 @@ class PartFour:
         cross_stock_average_volatility = volatilities.mean()  # Cross-stock average volatility
         return cross_stock_average_volatility
 
-    def calculate_covariance_matrix(self):
-        recent_returns = self.get_returns().drop(columns=['Date', 'World'])[-60:]  # Most recent 60 data points
-        covariance_matrix = recent_returns.cov()  # Covariance matrix of returns
+    def calculate_covariance_matrix(self, window_returns):
+        covariance_matrix = window_returns.cov()  # Covariance matrix of returns
         return covariance_matrix
 
     # Next step
-    def mean_variance_optimal_weights(self, mean_returns, cov_matrix, risk_aversion):
-        inv_cov_matrix = np.linalg.inv(cov_matrix)
-        ones = np.ones(len(mean_returns))
-        weights = inv_cov_matrix.dot(mean_returns - risk_aversion * cov_matrix.dot(ones)) / (ones.dot(inv_cov_matrix).dot(mean_returns - risk_aversion * cov_matrix.dot(ones)))
+    def mean_variance_optimal_weights(self, alphas, cov_matrix, risk_aversion):
+        n = len(alphas)
+        ones = np.ones(n)
         
-        return weights
+        def objective(weights):
+            return weights.T @ cov_matrix @ weights - risk_aversion * alphas @ weights
 
-    def calculate_portfolio_returns_and_weights(self,crra=4):
+        constraints = {'type': 'eq', 'fun': lambda weights: np.sum(weights) - 1}
+        bounds = [(0, 1) for _ in range(n)]
+
+        initial_guess = np.array([1/n] * n)
+        result = minimize(objective, initial_guess, bounds=bounds, constraints=constraints)
+
+        if not result.success:
+            raise ValueError("Optimization failed")
+
+        return result.x
+
+    def calculate_portfolio_returns_and_weights(self, crra=4):
         portfolio_returns = []
         portfolio_weights = []
+
+        for i in range(60, len(self.returns) - 1):
+            window_returns = self.returns.iloc[i-60:i, 1:-1]
+            cov_matrix = self.calculate_covariance_matrix(window_returns)
+            alphas = self.alphas.iloc[i-60, 1:]
+            weights = self.mean_variance_optimal_weights(alphas, cov_matrix, crra)
+            next_month_return = self.returns.iloc[i+1, 1:-1].dot(weights)
+            portfolio_returns.append(next_month_return)
+            portfolio_weights.append(weights)
         
-        returns_without_date=self.get_returns().drop(columns=['Date', 'World']).dropna()
-        for i in range(61, len(returns_without_date.index)):
-            
-            window_returns = returns_without_date.loc[i:]
-            mean_returns = window_returns.mean()
-            cov_matrix = window_returns.cov()
-            # First month return 0.06021854209088286
-            weights = self.mean_variance_optimal_weights(mean_returns, cov_matrix, crra)
-            next_month=i+1
-            if next_month < returns_without_date.index.size:
-                temp=window_returns.loc[next_month]
-                next_month_return = temp.dot(weights)
-                # if next_month_return<0:
-                    
-                portfolio_returns.append(next_month_return)
-                portfolio_weights.append(weights)
         self.portfolio_returns = pd.Series(portfolio_returns)
         self.portfolio_weights = pd.DataFrame(portfolio_weights)
-        # returns_str = portfolio_returns.to_string(header=True, index=True, float_format='{:,.4f}'.format)
-        print(f'Returns: \n\n{self.portfolio_returns[120:]}\n\nWeights: \n{self.portfolio_weights[120:]}')
-        return f'Returns: \n\n{self.portfolio_returns}\n\nWeights: \n{self.portfolio_weights}'
+        print(f'Returns: \n\n{self.portfolio_returns}\n\nWeights: \n{self.portfolio_weights}')
+        return self.portfolio_returns, self.portfolio_weights
     
     def annualisation(self):
         # Annualization factor
@@ -97,14 +100,14 @@ class PartFour:
         risk_free_rate = 0.02  # Assume a risk-free rate of 2%
         sharpe_ratio = (mean_return_annualized - risk_free_rate) / return_volatility_annualized
 
-        return mean_return_annualized, return_volatility_annualized, sharpe_ratio
+        return f'annual mean: {mean_return_annualized} annual volatility {return_volatility_annualized} sharpe ratio: {sharpe_ratio}'   
 
-    # def calculate_average_turnover(self, portfolio_weights):
-    #     # Calculate the absolute change in weights from one month to the next
-    #     weight_changes = portfolio_weights.diff().abs().sum(axis=1)
-    #     # Calculate average turnover
-    #     average_turnover = weight_changes.mean()
-    #     return average_turnover
+    def calculate_average_turnover(self, portfolio_weights):
+        # Calculate the absolute change in weights from one month to the next
+        weight_changes = portfolio_weights.diff().abs().sum(axis=1)
+        # Calculate average turnover
+        average_turnover = weight_changes.mean()
+        return average_turnover
 
     def plot_cumulative_returns(self):
         
@@ -119,9 +122,12 @@ class PartFour:
         plt.tight_layout()
         plt.show()
 
-o=PartFour()
+file_path = 'Part 2\SMM921_pf_data_2024.xlsx'
+o = PartFour()
 o.calculate_alphas()
-o.calculate_covariance_matrix()
 o.calculate_portfolio_returns_and_weights()
-o.annualisation()
+annualized_metrics = o.annualisation()
+print(f'Annualized Metrics: {annualized_metrics}')
+average_turnover = o.calculate_average_turnover(o.portfolio_weights)
+print(f'Average Turnover: {average_turnover}')
 o.plot_cumulative_returns()

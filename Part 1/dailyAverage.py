@@ -49,8 +49,8 @@ class DataProcessor:
         
         plt.figure(figsize=(10, 6))
         # Do one at the time
-        plt.plot(filtered_dataset['Date'], filtered_dataset['DailyAvgMidQuoteVolatility'], label='Daily Avg Mid Quote Volatility', marker='o')
-        plt.plot(filtered_dataset['Date'], filtered_dataset['DailyAvgSpread'], label='Daily Avg Spread', marker='o')
+        # plt.plot(filtered_dataset['Date'], filtered_dataset['DailyAvgMidQuoteVolatility'], label='Daily Avg Mid Quote Volatility', marker='o')
+        # plt.plot(filtered_dataset['Date'], filtered_dataset['DailyAvgSpread'], label='Daily Avg Spread', marker='o')
         plt.plot(filtered_dataset['Date'], filtered_dataset['DailyAvgDepth'], label='Daily Avg Depth', marker='o')
 
         plt.xlabel('Date')
@@ -88,4 +88,5 @@ ds=calc.get_dataset()
 
 o=DataProcessor(ds)
 print(o.regression())
-# o.plot_daily_series()
+o.plot_daily_series()
+print(o.get_correlation())

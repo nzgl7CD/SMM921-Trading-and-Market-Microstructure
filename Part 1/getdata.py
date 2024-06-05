@@ -46,7 +46,7 @@ class PartOne:
         else:
             # If there are less than 3 unique stocks, keep them all
             self.dataset = self.dataset[self.dataset['Stock'].isin(self.unique_stocks)]
-        # print(self.dataset['Stock'].unique())
+        print("Three stocks: ", self.dataset['Stock'].unique())
 
     def save_data(self, output_path):
         if self.dataset is not None:
