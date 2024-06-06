@@ -15,8 +15,11 @@ class Summeriser:
     
 
     def summing(self):
-        # summary = self.dataset.groupby('Stock')[['Spread', 'Depth']].describe()
-        summary = self.dataset[['Spread', 'Depth']].describe()
+        summary = self.dataset.groupby('Stock')[['Spread']].describe()
+        # summary = self.dataset[['Spread', 'Depth']].describe()
+        print(summary)
+        summary = self.dataset.groupby('Stock')[['Depth']].describe()
+        print(summary)
         return summary
     # Should we remove outlier?
     
@@ -51,8 +54,8 @@ class Summeriser:
         dictionary={'Stock':[],'Spread':[],'Depth':[]}
         
         self.dataset['Time'] = pd.to_datetime(self.dataset['Time'], format='%H:%M:%S').dt.time
-        #    average_values = self.dataset.groupby('Stock')[['Spread', 'Depth']].mean()
-        # print(average_values)
+        average_values = self.dataset.groupby('Stock')[['Spread', 'Depth']].mean()
+        print(average_values)
 
         # Loop through every 60th row
         for index, row in self.dataset.iterrows():
@@ -64,20 +67,50 @@ class Summeriser:
         df=pd.DataFrame(dictionary)
         mean_values = df.groupby('Stock').mean()
         return mean_values
+    
+    # def outliers(self):
+        # self.dataset['Mean Spread'] = self.dataset['Spread'].mean()
+        # mean_spread=self.dataset['Mean Spread'].groupby('Stock').mean
+        # print(mean_spread)
+
+        # # Calculate means and standard deviations for outlier detection
+        # mean_return_avg = metrics.groupby('Stock')['Spread'].mean()
+        # mean_return_std = metrics['Mean Return'].std()
+        
+        # std_dev_avg = metrics['Standard Deviation'].mean()
+        # std_dev_std = metrics['Standard Deviation'].std()
+        
+        # sharpe_ratio_avg = metrics['Sharpe Ratio'].mean()
+        # sharpe_ratio_std = metrics['Sharpe Ratio'].std()
+
+        # # Identify outliers
+        outliers_mean = metrics[np.abs(metrics['Mean Return'] - mean_return_avg) > 2 * mean_return_std]
+        # outliers_std_dev = metrics[np.abs(metrics['Standard Deviation'] - std_dev_avg) > 2 * std_dev_std]
+        # outliers_sharpe = metrics[np.abs(metrics['Sharpe Ratio'] - sharpe_ratio_avg) > 2 * sharpe_ratio_std]
+
+        # # Combine all outliers into a single DataFrame
+        # self.outliers = pd.concat([outliers_mean, outliers_std_dev, outliers_sharpe]).drop_duplicates()
+
+        # # Display outliers
+        # print("Outliers:")
+        
+        # print()
+        # return self.outliers
+    
         
         
 
 
-# output_path = r'Part 1\modified_trading_data_2024.csv'
-# calc=Clc(output_path)
-# calc.set_datset()
-# calc.set_quote_spread()
-# calc.save_data()
-# ds=calc.get_dataset()
+output_path = r'Part 1\modified_trading_data_2024.csv'
+calc=Clc(output_path)
+calc.set_datset()
+calc.set_quote_spread()
+calc.save_data()
+ds=calc.get_dataset()
 
-# o=Summeriser(ds)
-# sumer=o.summing()
-# means=o.mean_measures()
-# print(sumer, '\n', means)
+o=Summeriser(ds)
+sumer=o.summing()
+means=o.mean_measures()
+# o.outliers()
 
 
