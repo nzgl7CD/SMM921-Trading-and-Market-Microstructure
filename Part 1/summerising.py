@@ -70,21 +70,19 @@ class Summeriser:
 
         plt.tight_layout()
         plt.show()
+
     # Task 2
     def mean_measures(self):
-        # Convert 'Time' column to datetime if it's not already
         self.dataset['Time'] = pd.to_datetime(self.dataset['Time'], format='%H:%M:%S').dt.time
 
         # Filter dataset to include only rows where Time is hh:15:00
         hourly_data = self.dataset[(self.dataset['Time'].apply(lambda x: x.minute == 15)) & (self.dataset['Time'].apply(lambda x: x.second == 0))]
 
-        # Group by Date, Stock, and hour (Time), calculate mean Spread and Depth
         hourly_means = hourly_data.groupby(['Date', 'Stock', self.dataset['Time'].apply(lambda x: x.hour)]).agg({
             'Spread': 'mean',
             'Depth': 'mean'
         }).reset_index()
 
-        # Plotting daily hour means for each stock
         fig, axes = plt.subplots(nrows=len(hourly_means['Stock'].unique()), ncols=2, figsize=(16, 12), sharex=True)
 
         for i, stock in enumerate(hourly_means['Stock'].unique()):
@@ -107,34 +105,19 @@ class Summeriser:
 
         return hourly_means
 
-        # Plot mean Depth across hours for each stock
-        fig, axes = plt.subplots(nrows=2, ncols=1, figsize=(12, 10))
+       
 
-        for stock, ax in zip(hourly_means['Stock'].unique(), axes.flatten()):
-            stock_data = hourly_means[hourly_means['Stock'] == stock]
-            ax.plot(stock_data['Date'], stock_data['Depth'], label='Depth', marker='o', linestyle='--', color='orange')
-            ax.set_xlabel('Date')
-            ax.set_ylabel('Mean Depth')
-            ax.set_title(f'Mean Depth Variation for {stock}')
-            ax.grid(True)
-            ax.legend()
+# if __name__ == "__main__":
+#     output_path = r'Part 1\modified_trading_data_2024.csv'
+#     calc = Clc(output_path)
+#     calc.set_datset()
+#     calc.set_quote_spread()
+#     calc.save_data()
+#     ds = calc.get_dataset()
 
-        plt.tight_layout()
-        plt.show()
-
-        return hourly_means
-
-if __name__ == "__main__":
-    output_path = r'Part 1\modified_trading_data_2024.csv'
-    calc = Clc(output_path)
-    calc.set_datset()
-    calc.set_quote_spread()
-    calc.save_data()
-    ds = calc.get_dataset()
-
-    summariser = Summeriser(ds)
-    summariser.summing()
-    # summariser.plot_time_series_spreads(remove_outliers=True)  
-    # summariser.plot_time_series_depth(remove_outliers=True)   
-    mean_measures = summariser.mean_measures()
-    print(mean_measures)
+#     summariser = Summeriser(ds)
+#     summariser.summing()
+#     # summariser.plot_time_series_spreads(remove_outliers=True)  
+#     # summariser.plot_time_series_depth(remove_outliers=True)   
+#     mean_measures = summariser.mean_measures()
+#     print(mean_measures)

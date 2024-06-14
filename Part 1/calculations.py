@@ -33,10 +33,10 @@ class Calculations:
 
 
 
-output_path = r'Part 1\modified_trading_data_2024.csv'
+# output_path = r'Part 1\modified_trading_data_2024.csv'
 
-o = Calculations(output_path)
-o.set_datset()
-o.set_quote_spread()
-o.save_data()
-o.display_data()
+# o = Calculations(output_path)
+# o.set_datset()
+# o.set_quote_spread()
+# o.save_data()
+# o.display_data()
