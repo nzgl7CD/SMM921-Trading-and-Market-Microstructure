@@ -1,116 +1,140 @@
-from getdata import PartOne as PO
+# from getdata import PartOne as PO
 from calculations import Calculations as Clc
 import pandas as pd
 import matplotlib.pyplot as plt
-import statsmodels.stats.outliers_influence as oi
-import numpy as np
-import statsmodels.formula.api as smf
-import statsmodels.stats.api as sms
+# import statsmodels.stats.outliers_influence as oi
+# import numpy as np
+# import statsmodels.formula.api as smf
+# import statsmodels.stats.api as sms
 
 class Summeriser:
-
     def __init__(self, dataset) -> None:
-        
-        self.dataset=dataset
-    
-
-    def summing(self):
-        summary = self.dataset.groupby('Stock')[['Spread']].describe()
-        # summary = self.dataset[['Spread', 'Depth']].describe()
-        print(summary)
-        summary = self.dataset.groupby('Stock')[['Depth']].describe()
-        print(summary)
-        return summary
-    # Should we remove outlier?
-    
-    def plot_time_series(self):
-
-    # Ensure 'Date-Time' is in datetime format
+        self.dataset = dataset
         self.dataset['Date-Time'] = pd.to_datetime(self.dataset['Date-Time'])
+        self.dataset['Date'] = self.dataset['Date-Time'].dt.date
+    # Task 1
+    def summing(self):
+        summary_spread = self.dataset.groupby('Stock')['Spread'].describe()
+        summary_depth = self.dataset.groupby('Stock')['Depth'].describe()
+        print("Spread Summary:\n", summary_spread)
+        print("Depth Summary:\n", summary_depth)
+    # Task 1
+    def remove_outliers(self):
+        # Identify and remove outliers using IQR method
+        def iqr_outliers(data, column):
+            Q1 = data[column].quantile(0.25)
+            Q3 = data[column].quantile(0.75)
+            IQR = Q3 - Q1
+            lower_bound = Q1 - 1.5 * IQR
+            upper_bound = Q3 + 1.5 * IQR
+            return data[(data[column] >= lower_bound) & (data[column] <= upper_bound)]
+        filtered_data = self.dataset.groupby('Stock').apply(lambda x: iqr_outliers(x, 'Spread')).reset_index(drop=True)
+        filtered_data = filtered_data.groupby('Stock').apply(lambda x: iqr_outliers(x, 'Depth')).reset_index(drop=True)
+        
+        return filtered_data
+    # Task 1
+    def plot_time_series_spreads(self, remove_outliers=False):
+        data_to_plot = self.remove_outliers() if remove_outliers else self.dataset
+        daily_data = data_to_plot.groupby(['Date', 'Stock']).agg({'Spread': 'mean'}).reset_index()
+        fig, ax = plt.subplots(figsize=(10, 6))
 
-        fig, ax1 = plt.subplots(figsize=(10, 6))
+        for stock in daily_data['Stock'].unique():
+            stock_data = daily_data[daily_data['Stock'] == stock]
+            ax.plot(stock_data['Date'], stock_data['Spread'], label=f'Spread - {stock}')
 
-        # Plot Spread on the primary y-axis
-        ax1.plot(self.dataset['Date-Time'], self.dataset['Spread'], label='Spread', color='blue')
-        ax1.set_xlabel('Date-Time')
-        ax1.set_ylabel('Spread', color='blue')
-        ax1.tick_params(axis='y', labelcolor='blue')
-        ax1.set_title('Time-Series of Spread and Depth')
-
-        # Create a secondary y-axis to plot Depth
-        ax2 = ax1.twinx()
-        ax2.plot(self.dataset['Date-Time'], self.dataset['Depth'], label='Depth', color='orange')
-        ax2.set_ylabel('Depth', color='orange')
-        ax2.tick_params(axis='y', labelcolor='orange')
-
-        # Add legends
-        fig.legend(loc='upper left', bbox_to_anchor=(0.1, 0.9))
+        ax.set_xlabel('Date')
+        ax.set_ylabel('Spread', color='blue')
+        ax.tick_params(axis='y', labelcolor='blue')
+        ax.set_title('Daily Average Spread')
+        ax.legend(loc='upper left')
+        ax.xaxis.set_major_locator(plt.MaxNLocator(integer=True))
 
         plt.tight_layout()
         plt.show()
-    
+    # Task 1
+    def plot_time_series_depth(self, remove_outliers=False):
+        data_to_plot = self.remove_outliers() if remove_outliers else self.dataset
+        daily_data = data_to_plot.groupby(['Date', 'Stock']).agg({'Depth': 'mean'}).reset_index()
+        fig, ax = plt.subplots(figsize=(10, 6))
+
+        for stock in daily_data['Stock'].unique():
+            stock_data = daily_data[daily_data['Stock'] == stock]
+            ax.plot(stock_data['Date'], stock_data['Depth'], label=f'Depth - {stock}')
+
+        ax.set_xlabel('Date')
+        ax.set_ylabel('Depth', color='orange')
+        ax.tick_params(axis='y', labelcolor='orange')
+        ax.set_title('Daily Average Depth')
+        ax.legend(loc='upper left')
+        ax.xaxis.set_major_locator(plt.MaxNLocator(integer=True))
+
+        plt.tight_layout()
+        plt.show()
+    # Task 2
     def mean_measures(self):
-        
-        dictionary={'Stock':[],'Spread':[],'Depth':[]}
-        
+        # Convert 'Time' column to datetime if it's not already
         self.dataset['Time'] = pd.to_datetime(self.dataset['Time'], format='%H:%M:%S').dt.time
-        average_values = self.dataset.groupby('Stock')[['Spread', 'Depth']].mean()
-        print(average_values)
 
-        # Loop through every 60th row
-        for index, row in self.dataset.iterrows():
-            # Check if the 'Time' value is on the hour
-            if row['Time'].minute == 0 and row['Time'].second == 0:
-                dictionary['Stock'].append(self.dataset['Stock'].iloc[index])
-                dictionary['Spread'].append(self.dataset['Spread'].iloc[index])
-                dictionary['Depth'].append(self.dataset['Depth'].iloc[index])
-        df=pd.DataFrame(dictionary)
-        mean_values = df.groupby('Stock').mean()
-        return mean_values
-    
-    # def outliers(self):
-        # self.dataset['Mean Spread'] = self.dataset['Spread'].mean()
-        # mean_spread=self.dataset['Mean Spread'].groupby('Stock').mean
-        # print(mean_spread)
+        # Filter dataset to include only rows where Time is hh:15:00
+        hourly_data = self.dataset[(self.dataset['Time'].apply(lambda x: x.minute == 15)) & (self.dataset['Time'].apply(lambda x: x.second == 0))]
 
-        # # Calculate means and standard deviations for outlier detection
-        # mean_return_avg = metrics.groupby('Stock')['Spread'].mean()
-        # mean_return_std = metrics['Mean Return'].std()
-        
-        # std_dev_avg = metrics['Standard Deviation'].mean()
-        # std_dev_std = metrics['Standard Deviation'].std()
-        
-        # sharpe_ratio_avg = metrics['Sharpe Ratio'].mean()
-        # sharpe_ratio_std = metrics['Sharpe Ratio'].std()
+        # Group by Date, Stock, and hour (Time), calculate mean Spread and Depth
+        hourly_means = hourly_data.groupby(['Date', 'Stock', self.dataset['Time'].apply(lambda x: x.hour)]).agg({
+            'Spread': 'mean',
+            'Depth': 'mean'
+        }).reset_index()
 
-        # # Identify outliers
-        outliers_mean = metrics[np.abs(metrics['Mean Return'] - mean_return_avg) > 2 * mean_return_std]
-        # outliers_std_dev = metrics[np.abs(metrics['Standard Deviation'] - std_dev_avg) > 2 * std_dev_std]
-        # outliers_sharpe = metrics[np.abs(metrics['Sharpe Ratio'] - sharpe_ratio_avg) > 2 * sharpe_ratio_std]
+        # Plotting daily hour means for each stock
+        fig, axes = plt.subplots(nrows=len(hourly_means['Stock'].unique()), ncols=2, figsize=(16, 12), sharex=True)
 
-        # # Combine all outliers into a single DataFrame
-        # self.outliers = pd.concat([outliers_mean, outliers_std_dev, outliers_sharpe]).drop_duplicates()
+        for i, stock in enumerate(hourly_means['Stock'].unique()):
+            stock_data = hourly_means[hourly_means['Stock'] == stock]
 
-        # # Display outliers
-        # print("Outliers:")
-        
-        # print()
-        # return self.outliers
-    
-        
-        
+            for j, metric in enumerate(['Spread', 'Depth']):
+                ax = axes[i, j]
+                for hour in stock_data['Time'].unique():
+                    hour_data = stock_data[stock_data['Time'] == hour]
+                    ax.plot(hour_data['Date'], hour_data[metric], label=f'{metric} at {hour}:15')
+                
+                ax.set_xlabel('Date')
+                ax.set_ylabel(f'Mean {metric}')
+                ax.set_title(f'Mean {metric} Variation for {stock}')
+                ax.grid(True)
+                ax.legend()
 
+        plt.tight_layout()
+        plt.show()
 
-output_path = r'Part 1\modified_trading_data_2024.csv'
-calc=Clc(output_path)
-calc.set_datset()
-calc.set_quote_spread()
-calc.save_data()
-ds=calc.get_dataset()
+        return hourly_means
 
-o=Summeriser(ds)
-sumer=o.summing()
-means=o.mean_measures()
-# o.outliers()
+        # Plot mean Depth across hours for each stock
+        fig, axes = plt.subplots(nrows=2, ncols=1, figsize=(12, 10))
 
+        for stock, ax in zip(hourly_means['Stock'].unique(), axes.flatten()):
+            stock_data = hourly_means[hourly_means['Stock'] == stock]
+            ax.plot(stock_data['Date'], stock_data['Depth'], label='Depth', marker='o', linestyle='--', color='orange')
+            ax.set_xlabel('Date')
+            ax.set_ylabel('Mean Depth')
+            ax.set_title(f'Mean Depth Variation for {stock}')
+            ax.grid(True)
+            ax.legend()
 
+        plt.tight_layout()
+        plt.show()
+
+        return hourly_means
+
+if __name__ == "__main__":
+    output_path = r'Part 1\modified_trading_data_2024.csv'
+    calc = Clc(output_path)
+    calc.set_datset()
+    calc.set_quote_spread()
+    calc.save_data()
+    ds = calc.get_dataset()
+
+    summariser = Summeriser(ds)
+    summariser.summing()
+    # summariser.plot_time_series_spreads(remove_outliers=True)  
+    # summariser.plot_time_series_depth(remove_outliers=True)   
+    mean_measures = summariser.mean_measures()
+    print(mean_measures)

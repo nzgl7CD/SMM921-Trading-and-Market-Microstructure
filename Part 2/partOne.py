@@ -121,7 +121,7 @@ class PartOne:
         plt.show()
 
   
-# o=PartOne()
-# o.get_returns()
-# o.plot_data()
-# o.outliers()
+o=PartOne()
+o.get_returns()
+o.plot_data()
+o.outliers()
