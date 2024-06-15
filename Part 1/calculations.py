@@ -14,7 +14,9 @@ class Calculations:
         self.dataset['Mid Quote']=0.5*(self.dataset['Close Bid']+self.dataset['Close Ask']) ###Mid Quote as 1/2*(pb+pa)
         self.dataset['MidQuoteReturn'] = self.dataset['Mid Quote'].pct_change() ###Mid Quote Return as (mq1-mq0)/mq0 from index 1 to n as we don't calculate return for the first value
         self.dataset['Spread'] = 10000*((self.dataset['Close Ask']-self.dataset['Close Bid'])/self.dataset['Mid Quote']) ###Spread as 10k*(pa-pb)/mq
-        self.dataset['Depth'] = 0.5*(self.dataset['Close Bid']*self.dataset['Close Bid Size']+self.dataset['Close Ask']*self.dataset['Close Ask Size']) ###depth as 1/2*(Qa*Pa+Qb*Pb)
+        # self.dataset['Depth'] = 0.5*(self.dataset['Close Bid']*self.dataset['Close Bid Size']+self.dataset['Close Ask']*self.dataset['Close Ask Size']) ###depth as 1/2*(Qa*Pa+Qb*Pb)
+        self.dataset['Depth'] = 0.5*(self.dataset['Close Bid Size']+self.dataset['Close Ask Size']) ###depth as 1/2*(Qa*Pa+Qb*Pb)
+
         self.dataset = self.dataset[self.dataset['Spread'] >= 0]
     
     def save_data(self):
