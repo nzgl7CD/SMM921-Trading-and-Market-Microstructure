@@ -59,58 +59,47 @@ class PartFour:
 
         constraints = {'type': 'eq', 'fun': lambda weights: np.sum(weights) - 1}
         bounds = [(0, 1) for _ in range(n)]
-
         initial_guess = np.array([1/n] * n)
         result = minimize(objective, initial_guess, bounds=bounds, constraints=constraints)
-
         if not result.success:
             raise ValueError("Optimization failed")
-
         return result.x
 
     def calculate_portfolio_returns_and_weights(self, crra=4):
         portfolio_returns = []
         portfolio_weights = []
-
         for i in range(60, len(self.returns) - 1):
             window_returns = self.returns.iloc[i-60:i, 1:-1]
             cov_matrix = self.calculate_covariance_matrix(window_returns)
             alphas = self.alphas.iloc[i-60, 1:]
             weights = self.mean_variance_optimal_weights(alphas, cov_matrix, crra)
-            next_month_return = self.returns.iloc[i+1, 1:-1].dot(weights)
+            next_month_return = self.returns.iloc[i+1, 1:-1] @ (weights)
             portfolio_returns.append(next_month_return)
             portfolio_weights.append(weights)
-        
         self.portfolio_returns = pd.Series(portfolio_returns)
         self.portfolio_weights = pd.DataFrame(portfolio_weights)
         print(f'Returns: \n\n{self.portfolio_returns}\n\nWeights: \n{self.portfolio_weights}')
-        return self.portfolio_returns, self.portfolio_weights
+        
     
     def annualisation(self):
         # Annualization factor
         annual_factor = 12
-
         # Annualized mean return
         mean_return_annualized = self.portfolio_returns.mean() * annual_factor
-
         # Annualized return volatility (standard deviation)
         return_volatility_annualized = self.portfolio_returns.std() * np.sqrt(annual_factor)
-
         # Sharpe ratio
         risk_free_rate = 0.02  # Assume a risk-free rate of 2%
         sharpe_ratio = (mean_return_annualized - risk_free_rate) / return_volatility_annualized
-
         return f'annual mean: {mean_return_annualized} annual volatility {return_volatility_annualized} sharpe ratio: {sharpe_ratio}'   
 
     def calculate_average_turnover(self, portfolio_weights):
-        # Calculate the absolute change in weights from one month to the next
         weight_changes = portfolio_weights.diff().abs().sum(axis=1)
         # Calculate average turnover
         average_turnover = weight_changes.mean()
         return average_turnover
 
     def plot_cumulative_returns(self):
-        
         self.cumulative_returns=(1 + self.portfolio_returns).cumprod()
         plt.figure(figsize=(12, 8))
         self.cumulative_returns.plot(label='Cumulative Returns', marker='o')
@@ -122,12 +111,15 @@ class PartFour:
         plt.tight_layout()
         plt.show()
 
-file_path = 'Part 2\SMM921_pf_data_2024.xlsx'
+
 o = PartFour()
 o.calculate_alphas()
 o.calculate_portfolio_returns_and_weights()
-annualized_metrics = o.annualisation()
-print(f'Annualized Metrics: {annualized_metrics}')
-average_turnover = o.calculate_average_turnover(o.portfolio_weights)
-print(f'Average Turnover: {average_turnover}')
-o.plot_cumulative_returns()
+
+
+
+# annualized_metrics = o.annualisation()
+# print(f'Annualized Metrics: {annualized_metrics}')
+# average_turnover = o.calculate_average_turnover(o.portfolio_weights)
+# print(f'Average Turnover: {average_turnover}')
+# o.plot_cumulative_returns()
