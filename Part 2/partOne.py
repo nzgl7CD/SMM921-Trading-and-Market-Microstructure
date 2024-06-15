@@ -48,7 +48,6 @@ class PartOne:
         # Exclude 'World' from the outlier calculations
         
 
-        # Optional: Save the metrics to a CSV file
         self.metrics.to_csv('Part 2/country_metrics.csv', index=True)
         returns.to_excel('Part 2\modified_SMM921_pf_data_2024.xlsx')
         return returns
@@ -121,7 +120,7 @@ class PartOne:
         plt.show()
 
   
-o=PartOne()
-o.get_returns()
-o.plot_data()
-o.outliers()
+# o=PartOne()
+# o.get_returns()
+# o.plot_data()
+# o.outliers()

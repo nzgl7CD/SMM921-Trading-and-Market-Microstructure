@@ -27,7 +27,6 @@ class PartOne:
         
         self.dataset = self.dataset[self.dataset['Time'] >= cutoff_time_before_815] # Filter the DataFrame to keep only rows where 'Time' is greater than or equal to cutoff_time
         self.dataset = self.dataset[self.dataset['Time'] <= cutoff_time_after_1625]
-
         self.dataset['Date'] = self.dataset['Date-Time'].astype(str).str[:10]
         self.dataset['Date and Time'] = self.dataset.apply(lambda row: f"{row['Date']} {row['Time']}", axis=1)
 

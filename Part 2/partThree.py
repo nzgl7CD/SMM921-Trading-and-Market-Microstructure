@@ -16,6 +16,8 @@ class Momentum:
         self.cumulative_returns = None
         self.portfolio_metrics = None
         self.quintiles=None
+        self.get_hml_metric=None
+        self.set_annulised_mean_returns
       
 
     def momentum_signal(self):
@@ -24,8 +26,6 @@ class Momentum:
         for country in momentum_signals.columns[:-1]:  # Exclude 'Date'
             momentum_signals[country] = self.returns[country].rolling(window=12).apply(
                 lambda x: x[:-1].sum() if len(x) == 12 else np.nan, raw=True)
-
-        
         return momentum_signals
     
     def assign_to_portfolios(self, momentum):
@@ -52,8 +52,6 @@ class Momentum:
                     portfolio_countries = portfolios[portfolios == q].index
                     self.portfolio_returns.loc[next_month, f'P{q + 1}'] = self.returns.loc[next_month, portfolio_countries].mean()
                     # print(self.returns.loc[next_month, portfolio_countries].mean())
-        
-
         self.portfolio_returns = self.portfolio_returns.dropna()
         return self.portfolio_returns
 
@@ -102,13 +100,15 @@ class Momentum:
         std_dev_hml = self.portfolio_returns['HML'].std() * (self.annual_factor**0.5)
         sharpe_ratio_hml = (mean_return_hml - self.risk_free_rate) / std_dev_hml
 
-        hml_metrics = pd.DataFrame({
+        self.hml_metrics = pd.DataFrame({
             'Mean Return': [mean_return_hml],
             'Standard Deviation': [std_dev_hml],
             'Sharpe Ratio': [sharpe_ratio_hml]
         }, index=['HML'])
 
-        self.portfolio_metrics = pd.concat([self.portfolio_metrics, hml_metrics])
+        print(pd.concat([self.hml_metrics]))
+
+        self.portfolio_metrics = pd.concat([self.portfolio_metrics, self.hml_metrics])
 
         self.cumulative_returns['HML'] = (1 + self.portfolio_returns['HML']).cumprod()
         return self.portfolio_metrics
@@ -139,19 +139,22 @@ class Momentum:
 
     def get_returns(self):
         return self.returns
+    def get_portfolio_metric(self):
+        return self.portfolio_metrics
+
 
 
         
 
     
+if __name__ == "__main__":
 
-# momentum = Momentum()
-# momentum.momentum_signal()
+    momentum = Momentum()
+    momentum.momentum_signal()
+    momentum.portfolio_generate()
+    momentum.set_annulised_mean_returns()
+    momentum.portfolio_w_HML()
 
-# momentum.portfolio_generate()
-# momentum.set_annulised_mean_returns()
-# momentum.plot_cumulative_returns()
 
-# print(momentum.portfolio_w_HML())
-# momentum.plot_portfolio_w_HML()
-# momentum.regression()
+
+
