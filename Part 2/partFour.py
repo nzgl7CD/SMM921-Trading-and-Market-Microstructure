@@ -1,11 +1,10 @@
 from partThree import Momentum
-from partOne import PartOne
 import pandas as pd
 import numpy as np
 from matplotlib import pyplot as plt
 from scipy.optimize import minimize
-
-
+import matplotlib.ticker as mtick
+from exogenous import Exogenous
 
 class PartFour:
     
@@ -17,6 +16,11 @@ class PartFour:
         self.recent_returns=None
         self.portfolio_returns=None
         self.portfolio_weights=None
+        self.exo=Exogenous()
+        self.risk_free_rate=self.exo.get_risk_free_rate()
+        self.annual_factor=self.exo.get_annual_factor()
+        self.crra=self.exo.get_crra()
+        self.ic=self.exo.get_ic()
         
     def get_returns(self):
         file_path = r'Part 2\SMM921_pf_data_2024.xlsx'
@@ -75,28 +79,24 @@ class PartFour:
             next_month_return = self.returns.iloc[i+1, 1:-1].dot(weights)
             portfolio_returns.append(next_month_return)
             portfolio_weights.append(weights)
+            # print(max(weight))
         self.portfolio_returns = pd.Series(portfolio_returns)
+        
         self.portfolio_weights = pd.DataFrame(portfolio_weights)
-        # print(f'Returns: \n\n{self.portfolio_returns}\n\nWeights: \n{self.portfolio_weights}')
+        print(f'Returns: \n\n{self.portfolio_returns}\n\nWeights: \n{self.portfolio_weights}')
+        return self.portfolio_weights
         
     
     def annualisation(self):
         # Annualization factor
-        annual_factor = 12
+        
         # Annualized mean return
-        mean_return_annualized = self.portfolio_returns.mean() * annual_factor
+        mean_return_annualized = self.portfolio_returns.mean() * self.annual_factor
         # Annualized return volatility (standard deviation)
-        return_volatility_annualized = self.portfolio_returns.std() * np.sqrt(annual_factor)
+        return_volatility_annualized = self.portfolio_returns.std() * np.sqrt(self.annual_factor)
         # Sharpe ratio
         risk_free_rate = 0.02  # Assume a risk-free rate of 2%
         sharpe_ratio = (mean_return_annualized - risk_free_rate) / return_volatility_annualized
-        optimal_metric = pd.DataFrame({
-            'Mean Return': [mean_return_annualized],
-            'Standard Deviation': [return_volatility_annualized],
-            'Sharpe Ratio': [sharpe_ratio]
-        }, index=['Optimal'])
-
-        portfolio_metrics = portfolio_metrics = pd.concat([optimal_metric])
 
         return pd.DataFrame({
             'Mean Return': [mean_return_annualized],
@@ -111,11 +111,17 @@ class PartFour:
         return average_turnover
 
     def plot_cumulative_returns(self):
-        self.cumulative_returns=(1 + self.portfolio_returns).cumprod()
+
+        self.cumulative_returns=(1 + self.portfolio_returns).cumprod()-1
+        
+        self.cumulative_returns.index=self.returns['Date'].iloc[61:].reset_index(drop=True)
+        
         plt.figure(figsize=(12, 8))
-        self.cumulative_returns.plot(label='Cumulative Returns', marker='o')
+        ax = self.cumulative_returns.plot(label='Cumulative Returns', marker='o')
+        ax.yaxis.set_major_formatter(mtick.PercentFormatter(1.0))  # Format y-axis as percentage
+        plt.ylim(0, self.cumulative_returns.max() * 1.1)  # Set y-axis limits to start at 0% and a bit above the max value
         plt.xlabel('Date')
-        plt.ylabel('Cumulative Return')
+        plt.ylabel('Cumulative Return (%)')
         plt.title('Cumulative Returns of the Optimal Portfolio')
         plt.legend()
         plt.grid(True)
@@ -142,16 +148,22 @@ class PartFour:
         
         return pd.DataFrame(results)
 
-    
 
-        
+if __name__ == "__main__":
+    o = PartFour()
+    # print(o.calculate_alphas())
+    o.calculate_alphas()
+    o.calculate_portfolio_returns_and_weights()
+    # w=o.calculate_portfolio_returns_and_weights()
+    o.annualisation()
+    # o.calculate_average_turnover(w)
+    o.plot_cumulative_returns()
 
 
-o = PartFour()
-ic_range = [0.01, 0.02, 0.03]
-risk_aversion_range = [3, 4, 5]
+    ic_range = [0.01, 0.02, 0.03]
+    risk_aversion_range = [3, 4, 5]
 
-# Investigate portfolio effects
-# results_df = o.investigate_portfolio_effects(ic_range, risk_aversion_range)
+    # Investigate portfolio effects
+    # results_df = o.investigate_portfolio_effects(ic_range, risk_aversion_range)
 
-# print(results_df)
+    # print(results_df)

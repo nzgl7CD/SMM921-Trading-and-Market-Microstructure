@@ -4,15 +4,17 @@ from matplotlib import pyplot as plt
 import numpy as np
 from partOne import PartOne
 from statsmodels.formula.api import ols
+from exogenous import Exogenous
 
 class Momentum:
     def __init__(self) -> None:
         o = PortfolioAnalysis()
+        self.exo=Exogenous()
         self.dataset = o.get_data()
         self.returns = o.form_data()
         self.portfolio_returns = None
-        self.annual_factor = 12
-        self.risk_free_rate = 0.02
+        self.annual_factor = self.exo.get_annual_factor()
+        self.risk_free_rate = self.exo.get_risk_free_rate()
         self.cumulative_returns = None
         self.portfolio_metrics = None
         self.quintiles=None
@@ -141,16 +143,13 @@ class Momentum:
         return self.returns
     def get_portfolio_metric(self):
         return self.portfolio_metrics
-
-
-
         
 
     
 if __name__ == "__main__":
 
     momentum = Momentum()
-    momentum.momentum_signal()
+    print(momentum.momentum_signal()[11:])
     momentum.portfolio_generate()
     momentum.set_annulised_mean_returns()
     momentum.portfolio_w_HML()
