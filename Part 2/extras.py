@@ -83,6 +83,7 @@ class PartFour:
             portfolio_weights.append(weights)
         self.portfolio_returns = pd.Series(portfolio_returns)
         self.portfolio_weights = pd.DataFrame(portfolio_weights)
+<<<<<<< HEAD
         print(f'Returns: \n\n{self.portfolio_returns}\n\nWeights: \n{self.portfolio_weights}')
         return self.portfolio_weights
         
@@ -172,3 +173,17 @@ risk_aversion_range = [3, 4, 5]
 
 # print(results_df)
 
+=======
+        return f'Returns:\n\n{self.portfolio_returns}\n\nWeights:\n{self.portfolio_weights}'
+
+
+    def calculate_alphas(self, ic=0.02):
+        momentum_signals = self.mom_sign[59:]
+        residual_risk = self.calculate_cross_stock_average_volatility()  # sigma_r
+        signals = momentum_signals.drop(columns=['Date'])
+        mean_signals = signals.mean(axis=1)
+        std_signals = signals.std(axis=1)  # sigma_s_t
+        self.alphas = ic * residual_risk * (signals.sub(mean_signals, axis=0).div(std_signals, axis=0))
+        self.alphas.insert(0, 'Date', momentum_signals['Date'])
+        return f'Alphas:\n\n{self.alphas}'
+>>>>>>> 70a61e2a9dd79c9337a0bb6dfc498353f9716f26
