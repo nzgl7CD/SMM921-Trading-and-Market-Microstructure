@@ -35,3 +35,14 @@ def mean_variance_optimal_weights(self, alphas, cov_matrix, risk_aversion):
         self.portfolio_returns = pd.Series(portfolio_returns)
         self.portfolio_weights = pd.DataFrame(portfolio_weights)
         return f'Returns:\n\n{self.portfolio_returns}\n\nWeights:\n{self.portfolio_weights}'
+
+
+    def calculate_alphas(self, ic=0.02):
+        momentum_signals = self.mom_sign[59:]
+        residual_risk = self.calculate_cross_stock_average_volatility()  # sigma_r
+        signals = momentum_signals.drop(columns=['Date'])
+        mean_signals = signals.mean(axis=1)
+        std_signals = signals.std(axis=1)  # sigma_s_t
+        self.alphas = ic * residual_risk * (signals.sub(mean_signals, axis=0).div(std_signals, axis=0))
+        self.alphas.insert(0, 'Date', momentum_signals['Date'])
+        return f'Alphas:\n\n{self.alphas}'
