@@ -28,16 +28,14 @@ class DataProcessor:
 
         # Calculate daily averages
         self.dataset['AbsMidQuoteReturn'] = self.dataset['MidQuoteReturn'].abs()
+        
         self.dataset['DailyAvgMidQuoteVolatility'] = self.dataset.groupby(self.dataset['Date'])['AbsMidQuoteReturn'].transform('mean')
         self.dataset['DailyAvgSpread'] = self.dataset.groupby(self.dataset['Date'])['Spread'].transform('mean')
         self.dataset['DailyAvgDepth'] = self.dataset.groupby(self.dataset['Date'])['Depth'].transform('mean')
 
-        print(self.dataset)
-
     # Plotting task 3a
 
     def plot_daily_series(self):
-    # Filter the dataset for the time '16:25:00'
         specific_time = pd.to_datetime('16:25:00').time()
         filtered_dataset = self.dataset[self.dataset['Time'] == specific_time]
 

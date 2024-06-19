@@ -20,8 +20,7 @@ class Momentum:
         self.quintiles=None
         self.get_hml_metric=None
         self.set_annulised_mean_returns
-      
-
+        
     def momentum_signal(self):
         momentum_signals = pd.DataFrame(index=self.returns.index, columns=self.returns.columns[1:-1])  # Exclude 'World, Date'
         momentum_signals['Date'] = self.returns['Date']  # Add Date column first
@@ -63,13 +62,19 @@ class Momentum:
 
         self.portfolio_metrics = pd.DataFrame(index=self.portfolio_returns.columns, columns=['Mean Return', 'Standard Deviation', 'Sharpe Ratio'])
 
-        for portfolio in self.portfolio_returns.columns:
-            mean_return = self.portfolio_returns[portfolio].mean() * self.annual_factor
-            std_dev = self.portfolio_returns[portfolio].std() * (self.annual_factor**0.5)
-            sharpe_ratio = (mean_return - self.risk_free_rate) / std_dev
-            self.portfolio_metrics.loc[portfolio] = [mean_return, std_dev, sharpe_ratio]
+        # for portfolio in self.portfolio_returns.columns:
+            # use (1+mean_return)**12-1
+        mean_return = (1+self.portfolio_returns).prod()**(self.annual_factor/len(self.portfolio_returns))-1
+        std_dev = self.portfolio_returns.std() * (self.annual_factor**0.5)
+        sharpe_ratio = (mean_return - self.risk_free_rate) / std_dev
+        self.portfolio_metrics.loc['P1'] = [mean_return['P1'], std_dev['P1'], sharpe_ratio['P1']]
+        self.portfolio_metrics.loc['P2'] = [mean_return['P2'], std_dev['P2'], sharpe_ratio['P2']]
+        self.portfolio_metrics.loc['P3'] = [mean_return['P3'], std_dev['P3'], sharpe_ratio['P3']]
+        self.portfolio_metrics.loc['P4'] = [mean_return['P4'], std_dev['P4'], sharpe_ratio['P4']]
+        self.portfolio_metrics.loc['P5'] = [mean_return['P5'], std_dev['P5'], sharpe_ratio['P5']]
 
         self.cumulative_returns = (1 + self.portfolio_returns).cumprod()
+        print(f'portfolio_metrics: {self.portfolio_metrics}')
         return self.portfolio_metrics
     
     def plot_cumulative_returns(self):
@@ -97,8 +102,8 @@ class Momentum:
         self.returns['HML'] = self.returns['HML'].astype(np.float64)
         
         self.returns=self.returns.dropna()
-        
-        mean_return_hml = self.portfolio_returns['HML'].mean() * self.annual_factor
+        print((1+self.portfolio_returns['HML']).prod())
+        mean_return_hml = (1+self.portfolio_returns['HML']).prod() **(self.annual_factor/len(self.portfolio_returns['HML']))-1
         std_dev_hml = self.portfolio_returns['HML'].std() * (self.annual_factor**0.5)
         sharpe_ratio_hml = (mean_return_hml - self.risk_free_rate) / std_dev_hml
 
@@ -113,6 +118,7 @@ class Momentum:
         self.portfolio_metrics = pd.concat([self.portfolio_metrics, self.hml_metrics])
 
         self.cumulative_returns['HML'] = (1 + self.portfolio_returns['HML']).cumprod()
+        print(self.portfolio_metrics)
         return self.portfolio_metrics
 
     def plot_portfolio_w_HML(self):
@@ -153,6 +159,7 @@ if __name__ == "__main__":
     momentum.portfolio_generate()
     momentum.set_annulised_mean_returns()
     momentum.portfolio_w_HML()
+    momentum.plot_portfolio_w_HML()
 
 
 

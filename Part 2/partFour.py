@@ -21,6 +21,7 @@ class PartFour:
         self.annual_factor=self.exo.get_annual_factor()
         self.crra=self.exo.get_crra()
         self.ic=self.exo.get_ic()
+        self.weight_changes=None
         
     def get_returns(self):
         file_path = r'Part 2\SMM921_pf_data_2024.xlsx'
@@ -83,7 +84,7 @@ class PartFour:
         self.portfolio_returns = pd.Series(portfolio_returns)
         
         self.portfolio_weights = pd.DataFrame(portfolio_weights)
-        print(f'Returns: \n\n{self.portfolio_returns}\n\nWeights: \n{self.portfolio_weights}')
+        # print(f'Returns: \n\n{self.portfolio_returns}\n\nWeights: \n{self.portfolio_weights}')
         return self.portfolio_weights
         
     
@@ -105,9 +106,9 @@ class PartFour:
         }, index=['Optimal'])   
 
     def calculate_average_turnover(self, portfolio_weights):
-        weight_changes = portfolio_weights.diff().abs().sum(axis=1)
+        self.weight_changes = portfolio_weights.diff().abs().sum(axis=1)
         # Calculate average turnover
-        average_turnover = weight_changes.mean()
+        average_turnover = self.weight_changes.mean()
         return average_turnover
 
     def plot_cumulative_returns(self):
@@ -124,6 +125,26 @@ class PartFour:
         plt.ylabel('Cumulative Return (%)')
         plt.title('Cumulative Returns of the Optimal Portfolio')
         plt.legend()
+        plt.grid(True)
+        plt.tight_layout()
+        plt.show()
+
+    def plot_turnover(self):
+        # Check if weight_changes is calculated
+        if self.weight_changes is None:
+            raise ValueError("Weight changes not calculated. Run calculate_average_turnover first.")
+        
+        # Set dates as index if not already done
+        if 'Date' not in self.returns.columns:
+            raise ValueError("Date column is missing in self.returns.")
+        
+        # Plotting
+        plt.figure(figsize=(12, 8))
+        plt.plot(self.returns['Date'].iloc[61:], self.weight_changes)
+        plt.xlabel('Date')
+        plt.ylabel('Weight Changes')
+        plt.title('Weight Changes Over Time')
+        plt.xticks(rotation=45)
         plt.grid(True)
         plt.tight_layout()
         plt.show()
@@ -154,16 +175,16 @@ if __name__ == "__main__":
     # print(o.calculate_alphas())
     o.calculate_alphas()
     o.calculate_portfolio_returns_and_weights()
-    # w=o.calculate_portfolio_returns_and_weights()
+    w=o.calculate_portfolio_returns_and_weights()
     o.annualisation()
-    # o.calculate_average_turnover(w)
-    o.plot_cumulative_returns()
+    o.calculate_average_turnover(w)
+    o.plot_turnover()
 
 
-    ic_range = [0.01, 0.02, 0.03]
-    risk_aversion_range = [3, 4, 5]
+    # ic_range = [0.01, 0.02, 0.03, 0.05, 0.1, 0.5, 1]
+    # risk_aversion_range = [1, 3, 4, 5, 10]
 
-    # Investigate portfolio effects
+    # # Investigate portfolio effects
     # results_df = o.investigate_portfolio_effects(ic_range, risk_aversion_range)
 
     # print(results_df)

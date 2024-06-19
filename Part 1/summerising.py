@@ -1,12 +1,6 @@
-# from getdata import PartOne as PO
 from calculations import Calculations as Clc
 import pandas as pd
 import matplotlib.pyplot as plt
-# import statsmodels.stats.outliers_influence as oi
-# import numpy as np
-# import statsmodels.formula.api as smf
-# import statsmodels.stats.api as sms
-
 class Summeriser:
     def __init__(self, dataset) -> None:
         self.dataset = dataset
@@ -53,11 +47,9 @@ class Summeriser:
         data_to_plot = self.remove_outliers() if remove_outliers else self.dataset
         daily_data = data_to_plot.groupby(['Date', 'Stock']).agg({'Depth': 'mean'}).reset_index()
         fig, ax = plt.subplots(figsize=(10, 6))
-
         for stock in daily_data['Stock'].unique():
             stock_data = daily_data[daily_data['Stock'] == stock]
             ax.plot(stock_data['Date'], stock_data['Depth'], label=f'Depth - {stock}')
-
         ax.set_xlabel('Date')
         ax.set_ylabel('Depth', color='orange')
         ax.tick_params(axis='y', labelcolor='orange')
@@ -67,35 +59,35 @@ class Summeriser:
         plt.tight_layout()
         plt.show()
     # Task 2
-    def mean_measures(self):
-        self.dataset['Time'] = pd.to_datetime(self.dataset['Time'], format='%H:%M:%S').dt.time
-        # Filter dataset to include only rows where Time is hh:15:00
-        hourly_data = self.dataset[(self.dataset['Time'].apply(lambda x: x.minute == 15)) & (self.dataset['Time'].apply(lambda x: x.second == 0))]
-        hourly_means = hourly_data.groupby(['Date', 'Stock', self.dataset['Time'].apply(lambda x: x.hour)]).agg({
-            'Spread': 'mean',
-            'Depth': 'mean'
-        }).reset_index()
+    # def mean_measures(self):
+    #     self.dataset['Time'] = pd.to_datetime(self.dataset['Time'], format='%H:%M:%S').dt.time
+    #     # Filter dataset to include only rows where Time is hh:15:00
+    #     hourly_data = self.dataset[(self.dataset['Time'].apply(lambda x: x.minute == 15)) & (self.dataset['Time'].apply(lambda x: x.second == 0))]
+    #     hourly_means = hourly_data.groupby(['Date', 'Stock', self.dataset['Time'].apply(lambda x: x.hour)]).agg({
+    #         'Spread': 'mean',
+    #         'Depth': 'mean'
+    #     }).reset_index()
 
-        fig, axes = plt.subplots(nrows=len(hourly_means['Stock'].unique()), ncols=2, figsize=(16, 12), sharex=True)
+    #     fig, axes = plt.subplots(nrows=len(hourly_means['Stock'].unique()), ncols=2, figsize=(16, 12), sharex=True)
 
-        for i, stock in enumerate(hourly_means['Stock'].unique()):
-            stock_data = hourly_means[hourly_means['Stock'] == stock]
+    #     for i, stock in enumerate(hourly_means['Stock'].unique()):
+    #         stock_data = hourly_means[hourly_means['Stock'] == stock]
 
-            for j, metric in enumerate(['Spread', 'Depth']):
-                ax = axes[i, j]
-                for hour in stock_data['Time'].unique():
-                    hour_data = stock_data[stock_data['Time'] == hour]
-                    ax.plot(hour_data['Date'], hour_data[metric], label=f'{metric} at {hour}:15')
+    #         for j, metric in enumerate(['Spread', 'Depth']):
+    #             ax = axes[i, j]
+    #             for hour in stock_data['Time'].unique():
+    #                 hour_data = stock_data[stock_data['Time'] == hour]
+    #                 ax.plot(hour_data['Date'], hour_data[metric], label=f'{metric} at {hour}:15')
                 
-                ax.set_xlabel('Date')
-                ax.set_ylabel(f'Mean {metric}')
-                ax.set_title(f'Mean {metric} Variation for {stock}')
-                ax.grid(True)
-                ax.legend()
+    #             ax.set_xlabel('Date')
+    #             ax.set_ylabel(f'Mean {metric}')
+    #             ax.set_title(f'Mean {metric} Variation for {stock}')
+    #             ax.grid(True)
+    #             ax.legend()
 
-        plt.tight_layout()
-        plt.show()
-        return hourly_means
+    #     plt.tight_layout()
+    #     plt.show()
+    #     return hourly_means
     
     def inspect_outliers(self, excel_path):
         def iqr_outliers(data, column):
@@ -109,17 +101,14 @@ class Summeriser:
         if 'Date' in self.dataset.columns and pd.api.types.is_datetime64tz_dtype(self.dataset['Date']):
             self.dataset['Date'] = self.dataset['Date'].dt.tz_localize(None)
         outliers_spread = self.dataset.groupby('Stock').apply(lambda x: iqr_outliers(x, 'Spread')).reset_index(drop=True)
-
         # Identify outliers in 'Depth' from the previous outliers
         outliers_depth = self.dataset.groupby('Stock').apply(lambda x: iqr_outliers(x, 'Depth')).reset_index(drop=True)
 
-        outliers_spread = outliers_spread[['Date', 'Time', 'Spread']]
-        outliers_depth = outliers_depth[['Date', 'Time', 'Depth']]
+        outliers_spread = outliers_spread[['Date', 'Time', 'Spread', 'Stock']]
+        outliers_depth = outliers_depth[['Date', 'Time', 'Depth', 'Stock']]
 
-        
         daily_data_spread= self.dataset.groupby(['Date', 'Stock']).agg({'Spread': 'mean'}).reset_index()
         daily_data_spread=daily_data_spread.groupby('Stock').apply(lambda x: iqr_outliers(x, 'Spread')).reset_index(drop=True)
-
 
         daily_data_depth= self.dataset.groupby(['Date', 'Stock']).agg({'Depth': 'mean'}).reset_index()
         daily_data_depth=daily_data_depth.groupby('Stock').apply(lambda x: iqr_outliers(x, 'Depth')).reset_index(drop=True)
@@ -130,7 +119,62 @@ class Summeriser:
             outliers_depth.to_excel(writer, sheet_name='Outliers Depth', index=False)
             daily_data_spread.to_excel(writer, sheet_name='Daily Mean Outliers Spread', index=False)
             daily_data_depth.to_excel(writer, sheet_name='Daily Mean Outliers Depth', index=False)
+    
+    def mean_measures(self):
+        # Convert 'Time' to datetime
+        self.dataset['Time'] = pd.to_datetime(self.dataset['Time'], format='%H:%M:%S').dt.time
+
+        # Filter dataset to include only rows where Time is hh:00:00
+        hourly_data = self.dataset[(self.dataset['Time'].apply(lambda x: x.minute == 0)) & (self.dataset['Time'].apply(lambda x: x.second == 0))]
         
+        # Extract hour part for grouping
+        hourly_data['Hour'] = hourly_data['Time'].apply(lambda x: x.hour)
+
+        # Group by 'Date', 'Stock', and 'Hour' and calculate mean spread and depth
+        hourly_means = hourly_data.groupby(['Date', 'Stock', 'Hour']).agg({
+            'Spread': 'mean',
+            'Depth': 'mean'
+        }).reset_index()
+
+        # Create a table of average spread and depth for each stock over the hours
+        avg_measures = hourly_means.groupby(['Stock', 'Hour']).agg({
+            'Spread': 'mean',
+            'Depth': 'mean'
+        }).reset_index()
+        
+        # Pivot the table for better readability
+        spread_table = avg_measures.pivot(index='Hour', columns='Stock', values='Spread')
+        depth_table = avg_measures.pivot(index='Hour', columns='Stock', values='Depth')
+
+        # Display the tables
+        print("Average Spread by Hour:")
+        print(spread_table)
+        print("\nAverage Depth by Hour:")
+        print(depth_table)
+
+        # Plotting the mean spread and depth for each stock across hours
+        fig, axes = plt.subplots(nrows=len(hourly_means['Stock'].unique()), ncols=2, figsize=(16, 12), sharex=True)
+
+        for i, stock in enumerate(hourly_means['Stock'].unique()):
+            stock_data = hourly_means[hourly_means['Stock'] == stock]
+
+            for j, metric in enumerate(['Spread', 'Depth']):
+                ax = axes[i, j]
+                pivot_table = stock_data.pivot(index='Hour', columns='Date', values=metric)
+                pivot_table.plot(ax=ax, legend=None)
+
+                ax.set_xlabel('Hour')
+                ax.set_ylabel(f'Mean {metric}')
+                ax.set_title(f'{stock} - Mean {metric} by Hour')
+                ax.grid(True)
+
+            # Add legends to the first column only
+            if j == 0:
+                ax.legend(title='Date', bbox_to_anchor=(1.05, 1), loc='upper left')
+
+        plt.tight_layout()
+        plt.show()
+        return hourly_means, spread_table, depth_table
         
         
 
@@ -146,15 +190,13 @@ if __name__ == "__main__":
     calc.set_quote_spread()
     calc.save_data()
     ds = calc.get_dataset()
-    print(ds)
+    # print(ds)
 
     summariser = Summeriser(ds)
-    summariser.summing()
-    # summariser.plot_time_series_spreads(remove_outliers=False)  
-    # summariser.plot_time_series_depth(remove_outliers=False)   
-    # mean_measures = summariser.mean_measures()
-    # print(mean_measures)
+    
+    summariser.mean_measures()
+    
+    
+    
     excel_path = r'Part 1\outlier.xlsx'
-    # summariser.print_outliers_dates(excel_path)
-
-    summariser.inspect_outliers(excel_path)
+    
