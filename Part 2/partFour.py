@@ -5,6 +5,7 @@ from matplotlib import pyplot as plt
 from scipy.optimize import minimize
 import matplotlib.ticker as mtick
 from exogenous import Exogenous
+from IPython.display import display
 
 class PartFour:
     
@@ -34,17 +35,18 @@ class PartFour:
 
     # Alpha=IC*sigma_r*(s_i-s^-)/sigma_s
     def calculate_alphas(self, ic=0.02):
-        momentum_signals=self.mom_sign[59:]
+        momentum_signals=self.mom_sign[60:] #Using the 61st data 2009-06-17
         residual_risk=self.calculate_cross_stock_average_volatility() # sigma_r
         signals = momentum_signals.drop(columns=['Date'])        
         mean_signals = signals.mean(axis=1)
         std_signals = signals.std(axis=1) # sigma_s_t
         self.alphas = ic * residual_risk*(signals.sub(mean_signals, axis=0).div(std_signals, axis=0))
         self.alphas.insert(0, 'Date', momentum_signals['Date'])
+        display(self.alphas)
         return f' Alphas:\n\n {self.alphas}'
 
     def calculate_cross_stock_average_volatility(self):
-        recent_returns = self.returns.iloc[-60:, 1:-1]  # Most recent 60 data points
+        recent_returns = self.returns.iloc[-60:, 1:-1]  # Most recent 60 data points exluding world and date
         volatilities = recent_returns.std()  # Standard deviation of each return series
         cross_stock_average_volatility = volatilities.mean()  # Cross-stock average volatility
         return cross_stock_average_volatility
@@ -75,6 +77,7 @@ class PartFour:
         for i in range(60, len(self.returns) - 1):
             window_returns = self.returns.iloc[i-60:i, 1:-1]
             cov_matrix = self.calculate_covariance_matrix(window_returns)
+            display(cov_matrix)
             alphas = self.alphas.iloc[i-60, 1:]
             weights = self.mean_variance_optimal_weights(alphas, cov_matrix, crra)
             next_month_return = self.returns.iloc[i+1, 1:-1].dot(weights)
@@ -82,17 +85,16 @@ class PartFour:
             portfolio_weights.append(weights)
             # print(max(weight))
         self.portfolio_returns = pd.Series(portfolio_returns)
-        
         self.portfolio_weights = pd.DataFrame(portfolio_weights)
         # print(f'Returns: \n\n{self.portfolio_returns}\n\nWeights: \n{self.portfolio_weights}')
+        # display(self.portfolio_weights[0].describe())
         return self.portfolio_weights
         
     
     def annualisation(self):
         # Annualization factor
-        
         # Annualized mean return
-        mean_return_annualized = self.portfolio_returns.mean() * self.annual_factor
+        mean_return_annualized = (1+self.portfolio_returns).prod() ** (self.annual_factor/self.portfolio_returns.size)-1
         # Annualized return volatility (standard deviation)
         return_volatility_annualized = self.portfolio_returns.std() * np.sqrt(self.annual_factor)
         # Sharpe ratio
@@ -109,6 +111,7 @@ class PartFour:
         self.weight_changes = portfolio_weights.diff().abs().sum(axis=1)
         # Calculate average turnover
         average_turnover = self.weight_changes.mean()
+        # display(average_turnover)
         return average_turnover
 
     def plot_cumulative_returns(self):
@@ -176,15 +179,16 @@ if __name__ == "__main__":
     o.calculate_alphas()
     o.calculate_portfolio_returns_and_weights()
     w=o.calculate_portfolio_returns_and_weights()
-    o.annualisation()
-    o.calculate_average_turnover(w)
-    o.plot_turnover()
+    print(o.annualisation())
+    # o.calculate_average_turnover(w)
+    # o.plot_cumulative_returns()
+    # o.plot_turnover()
 
 
-    # ic_range = [0.01, 0.02, 0.03, 0.05, 0.1, 0.5, 1]
-    # risk_aversion_range = [1, 3, 4, 5, 10]
+    ic_range = [0.01, 0.02, 0.03, 0.05, 0.1, 0.5, 1]
+    risk_aversion_range = [1, 3, 4, 5, 10]
 
     # # Investigate portfolio effects
-    # results_df = o.investigate_portfolio_effects(ic_range, risk_aversion_range)
+    results_df = o.investigate_portfolio_effects(ic_range, risk_aversion_range)
 
-    # print(results_df)
+    print(results_df)

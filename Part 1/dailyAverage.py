@@ -1,7 +1,7 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 from calculations import Calculations as Clc
-# import numpy as np
+import numpy as np
 # import scipy.stats as sps
 # import statsmodels.api as sm
 import statsmodels.formula.api as smf
@@ -22,7 +22,7 @@ class DataProcessor:
     def prepare_data(self):
         # Choose one unique stock. i=0 is AAL in this dataset
         self.unique_stocks = self.dataset['Stock'].unique().tolist()
-        self.dataset = self.dataset[self.dataset['Stock'] == self.unique_stocks[0]]
+        self.dataset = self.dataset[self.dataset['Stock'] == self.unique_stocks[0]].dropna()
         self.dataset['Date'] = pd.to_datetime(self.dataset['Date']).dt.date
         self.dataset['Time'] = pd.to_datetime(self.dataset['Time'], format='%H:%M:%S').dt.time
 
@@ -32,6 +32,7 @@ class DataProcessor:
         self.dataset['DailyAvgMidQuoteVolatility'] = self.dataset.groupby(self.dataset['Date'])['AbsMidQuoteReturn'].transform('mean')
         self.dataset['DailyAvgSpread'] = self.dataset.groupby(self.dataset['Date'])['Spread'].transform('mean')
         self.dataset['DailyAvgDepth'] = self.dataset.groupby(self.dataset['Date'])['Depth'].transform('mean')
+        
 
     # Plotting task 3a
 
@@ -104,6 +105,6 @@ ds=calc.get_dataset()
 
 o=DataProcessor(ds)
 # o.plot_daily_series()
-print(o.regression())
+print(o.get_correlation())
 # o.plot_daily_series()
 # print(f'Corr matrix \n {o.get_correlation()}')

@@ -5,6 +5,7 @@ import numpy as np
 from partOne import PartOne
 from statsmodels.formula.api import ols
 from exogenous import Exogenous
+from IPython.display import display
 
 class Momentum:
     def __init__(self) -> None:
@@ -23,10 +24,11 @@ class Momentum:
         
     def momentum_signal(self):
         momentum_signals = pd.DataFrame(index=self.returns.index, columns=self.returns.columns[1:-1])  # Exclude 'World, Date'
-        momentum_signals['Date'] = self.returns['Date']  # Add Date column first
+        momentum_signals['Date'] = self.returns['Date']  # Add Date column first 
         for country in momentum_signals.columns[:-1]:  # Exclude 'Date'
             momentum_signals[country] = self.returns[country].rolling(window=12).apply(
                 lambda x: x[:-1].sum() if len(x) == 12 else np.nan, raw=True)
+        # display(momentum_signals[11:])
         return momentum_signals
     
     def assign_to_portfolios(self, momentum):
@@ -155,11 +157,12 @@ class Momentum:
 if __name__ == "__main__":
 
     momentum = Momentum()
-    print(momentum.momentum_signal()[11:])
-    momentum.portfolio_generate()
-    momentum.set_annulised_mean_returns()
-    momentum.portfolio_w_HML()
-    momentum.plot_portfolio_w_HML()
+    # print(momentum.momentum_signal()[11:])
+    momentum.momentum_signal()
+    # momentum.portfolio_generate()
+    # momentum.set_annulised_mean_returns()
+    # momentum.portfolio_w_HML()
+    # momentum.plot_portfolio_w_HML()
 
 
 
